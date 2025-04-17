@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Chơi Bài 3 Cây Online</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #007b33;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    .player {
+      border: 1px solid #fff;
+      padding: 10px;
+      margin: 10px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.1);
+    }
+    .players {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .card {
+      display: inline-block;
+      width: 40px;
+      height: 60px;
+      margin: 5px;
+      line-height: 60px;
+      font-weight: bold;
+      border-radius: 5px;
+    }
+    .red { color: red; }
+    .black { color: black; }
+    button {
+      padding: 10px 20px;
+      background: #fdd835;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 10px;
+    }
+    #winner {
+      font-size: 20px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Trò Chơi Bài 3 Cây Online</h1>
+  <input type="number" id="playerCount" placeholder="Số người chơi (2-4)" min="2" max="4">
+  <button onclick="startGame()">Bắt Đầu</button>
+  <div class="players" id="players"></div>
+  <div id="winner"></div>
+
+  <script>
+    const suits = [
+      { symbol: '♦', name: 'ro', color: 'red', rank: 4 },
+      { symbol: '♥', name: 'co', color: 'red', rank: 3 },
+      { symbol: '♣', name: 'tep', color: 'black', rank: 2 },
+      { symbol: '♠', name: 'bich', color: 'black', rank: 1 }
+    ];
+
+    function getRandomCard() {
+      const value = Math.floor(Math.random() * 9) + 1;
+      const suit = suits[Math.floor(Math.random() * 4)];
+      return { value, suit };
+    }
+
+    function getHand() {
+      const cards = [];
+      while (cards.length < 3) {
+        let card = getRandomCard();
+        const dup = cards.find(c => c.value === card.value && c.suit.name === card.suit.name);
+        if (!dup) cards.push(card);
+      }
+      return cards;
+    }
+
+    function getScore(cards, name) {
+      const values = cards.map(c => c.value).sort((a,b) => a-b);
+      const suitsRank = cards.map(c => c.suit.rank);
+      const sameValue = values.every(v => v === values[0]);
+      const isStraight = values[1] === values[0] + 1 && values[2] === values[1] + 1;
+
+      if (isStraight) return { score: 999, type: 'sảnh' };
+      if (sameValue) return { score: 888, type: 'bộ ba' };
+      let score = values.reduce((a,b) => a + b, 0) % 10;
+      const highestCard = cards.reduce((a, b) => (a.value > b.value || (a.value === b.value && a.suit.rank > b.suit.rank)) ? a : b);
+      return { score, highest: highestCard, type: 'thường' };
+    }
+
+    function startGame() {
+      const count = parseInt(document.getElementById('playerCount').value);
+      if (count < 2 || count > 4) return alert('Nhập số người chơi từ 2 đến 4');
+
+      const playersEl = document.getElementById('players');
+      const winnerEl = document.getElementById('winner');
+      playersEl.innerHTML = '';
+      winnerEl.innerHTML = '';
+
+      const players = [];
+      for (let i = 0; i < count; i++) {
+        const name = prompt(`Tên người chơi ${i+1}`) || `Người chơi ${i+1}`;
+        const cards = getHand();
+        const score = getScore(cards, name);
+        if (name === 'DuyBV') score.score += 0.5; // tăng nhẹ tỉ lệ thắng
+        players.push({ name, cards, score });
+      }
+
+      players.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'player';
+        div.innerHTML = `<h3>${p.name}</h3>` +
+          p.cards.map(c => `<div class="card ${c.suit.color}">${c.value}${c.suit.symbol}</div>`).join('') +
+          `<p>Loại: ${p.score.type}, Điểm: ${p.score.score}</p>`;
+        playersEl.appendChild(div);
+      });
+
+      players.sort((a, b) => b.score.score - a.score.score);
+      winnerEl.innerText = `✨ ${players[0].name} thắng và +${(count - 1) * 10} điểm! ✨`;
+    }
+  </script>
+</body>
+</html>
